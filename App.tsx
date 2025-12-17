@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, X, Minus, Plus, Trash2, ArrowRight, Zap, ShieldCheck, Truck, RotateCcw, CreditCard, MapPin, Upload, Camera, CheckCircle, Package, User, MessageSquare, Send, Sparkles, Bot } from 'lucide-react';
+import { ShoppingBag, X, Minus, Plus, Trash2, ArrowRight, Zap, ShieldCheck, Truck, RotateCcw, CreditCard, MapPin, Upload, Camera, CheckCircle, Package, User, MessageSquare, Send, Sparkles, Bot, LayoutDashboard, FileSpreadsheet, MoreVertical, Edit, Copy, BarChart3, Search } from 'lucide-react';
 import { Header } from './components/Header';
 import { ProductCard } from './components/ProductCard';
 import { Button, Badge, Input } from './components/UI';
@@ -116,7 +116,10 @@ const App: React.FC = () => {
   const [checkoutStep, setCheckoutStep] = useState(1);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // Sell Page State
+  // Dashboard State
+  const [dashboardTab, setDashboardTab] = useState<'OVERVIEW' | 'INVENTORY' | 'BULK'>('OVERVIEW');
+  
+  // Sell Form State (For Bulk/Single)
   const [sellForm, setSellForm] = useState({
     title: '',
     category: '',
@@ -434,92 +437,261 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderSell = () => (
-    <div className="container mx-auto px-4 py-12 max-w-2xl">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-display font-bold text-white mb-4 italic">UPLOAD MANIFEST</h1>
-        <p className="text-gray-400">List your gear on the Blytz exchange. Instant liquidity for high-value tech.</p>
-      </div>
+  // --- SELLER DASHBOARD COMPONENTS ---
 
-      <div className="bg-blytz-dark border border-white/10 p-8 rounded-lg relative overflow-hidden">
-        {/* Decorative Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
-        
-        <div className="relative z-10 space-y-6">
-          <div className="border-2 border-dashed border-white/20 rounded-lg p-12 text-center hover:border-blytz-neon hover:bg-white/5 transition-all cursor-pointer group">
-            <Camera className="w-12 h-12 text-gray-500 mx-auto mb-4 group-hover:text-blytz-neon" />
-            <h3 className="text-white font-bold mb-1">Upload Product Images</h3>
-            <p className="text-xs text-gray-500">Drag & drop or click to scan</p>
+  const DashboardOverview = () => (
+    <div className="space-y-6 animate-in slide-in-from-right-4">
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-black/40 border border-white/10 p-6 rounded-lg relative overflow-hidden group hover:border-blytz-neon/50 transition-all">
+          <div className="absolute -right-4 -top-4 bg-blytz-neon/10 w-24 h-24 rounded-full blur-2xl group-hover:bg-blytz-neon/20 transition-all"></div>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Total Revenue</p>
+              <h3 className="text-3xl font-bold text-white mt-1">$12,450.00</h3>
+            </div>
+            <Zap className="text-blytz-neon w-6 h-6" />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-             <Input 
-                label="Item Name" 
-                placeholder="e.g. CyberDeck V2" 
-                className="col-span-2"
-                value={sellForm.title}
-                onChange={(e) => setSellForm(prev => ({...prev, title: e.target.value}))}
-             />
-             <Input 
-                label="Category" 
-                placeholder="Select..." 
-                value={sellForm.category}
-                onChange={(e) => setSellForm(prev => ({...prev, category: e.target.value}))}
-              />
-             <Input 
-                label="Condition" 
-                placeholder="Used - Like New" 
-                value={sellForm.condition}
-                onChange={(e) => setSellForm(prev => ({...prev, condition: e.target.value}))}
-             />
-             
-             {/* Description AI Section */}
-             <div className="col-span-2">
-               <div className="flex justify-between items-end mb-2">
-                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Description</label>
-                 <button 
-                  onClick={handleGenerateDesc}
-                  disabled={aiLoading.desc || !sellForm.title}
-                  className="text-xs flex items-center gap-1 text-blytz-neon hover:text-white disabled:opacity-50"
-                 >
-                   <Sparkles className="w-3 h-3" /> 
-                   {aiLoading.desc ? "Generating..." : "Auto-Generate"}
-                 </button>
-               </div>
-               <textarea 
-                  className="w-full bg-blytz-dark border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-blytz-neon font-mono text-sm h-32" 
-                  placeholder="Describe tech specs..."
-                  value={sellForm.description}
-                  onChange={(e) => setSellForm(prev => ({...prev, description: e.target.value}))}
-               ></textarea>
-             </div>
-             
-             {/* AI Price Suggestion */}
-             <div className="col-span-2 bg-blytz-neon/5 border border-blytz-neon/20 p-4 rounded flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-blytz-neon font-bold uppercase tracking-widest flex items-center gap-2">
-                    <Zap className="w-3 h-3" /> AI Price Estimation
-                  </span>
-                  <p className="text-gray-400 text-xs mt-1">Based on market demand</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-2xl font-bold text-white">
-                    {aiLoading.price ? <Loader2Icon className="animate-spin w-6 h-6" /> : `$${sellForm.price || '---.--'}`}
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={handleEstimatePrice}
-                    disabled={aiLoading.price || !sellForm.title}
-                  >
-                    Estimate
-                  </Button>
-                </div>
-             </div>
-
-             <Button className="col-span-2 mt-4" size="lg">List Item</Button>
+          <div className="text-xs text-green-400 flex items-center gap-1">
+            <ArrowRight className="w-3 h-3 -rotate-45" /> +12% this week
           </div>
         </div>
+
+        <div className="bg-black/40 border border-white/10 p-6 rounded-lg relative overflow-hidden group hover:border-blytz-neon/50 transition-all">
+          <div className="absolute -right-4 -top-4 bg-blue-500/10 w-24 h-24 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Signals</p>
+              <h3 className="text-3xl font-bold text-white mt-1">24</h3>
+            </div>
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></div>
+          </div>
+           <div className="text-xs text-gray-400">
+            5 items low on stock
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/10 p-6 rounded-lg relative overflow-hidden group hover:border-blytz-neon/50 transition-all">
+          <div className="absolute -right-4 -top-4 bg-purple-500/10 w-24 h-24 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
+           <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Seller Rating</p>
+              <h3 className="text-3xl font-bold text-white mt-1">4.9<span className="text-sm text-gray-500">/5.0</span></h3>
+            </div>
+            <ShieldCheck className="text-purple-500 w-6 h-6" />
+          </div>
+          <div className="text-xs text-purple-400">
+            Top Rated Seller Badge Active
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity Graph Placeholder */}
+      <div className="bg-black/40 border border-white/10 rounded-lg p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="font-bold text-white flex items-center gap-2"><BarChart3 className="w-4 h-4 text-blytz-neon" /> TRAFFIC ANALYSIS</h3>
+          <select className="bg-black border border-white/10 text-xs text-white p-1 rounded">
+             <option>Last 7 Days</option>
+             <option>Last 30 Days</option>
+          </select>
+        </div>
+        <div className="h-48 flex items-end gap-2 justify-between px-2">
+           {[30, 45, 25, 60, 75, 50, 80, 40, 55, 70, 65, 90].map((h, i) => (
+             <div key={i} className="w-full bg-white/5 hover:bg-blytz-neon transition-colors rounded-t" style={{height: `${h}%`}}></div>
+           ))}
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-gray-500 font-mono">
+           <span>00:00</span>
+           <span>06:00</span>
+           <span>12:00</span>
+           <span>18:00</span>
+           <span>23:59</span>
+        </div>
+      </div>
+
+      <div className="bg-blytz-neon/5 border border-blytz-neon/20 p-4 rounded flex items-center gap-4">
+        <div className="p-2 bg-blytz-neon text-black rounded">
+          <Sparkles className="w-5 h-5" />
+        </div>
+        <div>
+          <h4 className="font-bold text-white text-sm">Optimization Tip</h4>
+          <p className="text-xs text-gray-400">Items with "Cyber" in the title are trending up 15%. Consider renaming SKU-992.</p>
+        </div>
+        <Button size="sm" variant="outline" className="ml-auto">Apply</Button>
+      </div>
+    </div>
+  );
+
+  const DashboardInventory = () => (
+    <div className="animate-in slide-in-from-bottom-4 h-full flex flex-col">
+       <div className="flex justify-between items-center mb-6">
+         <h2 className="text-2xl font-display font-bold text-white italic">INVENTORY MATRIX</h2>
+         <div className="flex gap-2">
+            <div className="relative">
+              <input type="text" placeholder="Search SKU..." className="bg-black border border-white/10 pl-8 pr-4 py-2 text-sm text-white rounded focus:border-blytz-neon outline-none w-48" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+            </div>
+            <Button size="sm" onClick={() => setDashboardTab('BULK')}><Plus className="w-4 h-4 mr-1" /> Add New</Button>
+         </div>
+       </div>
+
+       <div className="bg-black/40 border border-white/10 rounded-lg overflow-hidden flex-1">
+         <table className="w-full text-left border-collapse">
+           <thead>
+             <tr className="border-b border-white/10 text-xs text-gray-500 uppercase tracking-widest bg-white/5">
+               <th className="p-4 font-medium">Product</th>
+               <th className="p-4 font-medium">Price</th>
+               <th className="p-4 font-medium">Stock</th>
+               <th className="p-4 font-medium">Status</th>
+               <th className="p-4 font-medium text-right">Actions</th>
+             </tr>
+           </thead>
+           <tbody className="divide-y divide-white/5">
+             {PRODUCTS.map(p => (
+               <tr key={p.id} className="hover:bg-white/5 transition-colors group">
+                 <td className="p-4">
+                   <div className="flex items-center gap-3">
+                     <img src={p.image} className="w-10 h-10 rounded bg-gray-800 object-cover" />
+                     <div>
+                       <div className="font-bold text-white text-sm">{p.title}</div>
+                       <div className="text-xs text-gray-500 font-mono">SKU-{p.id.padStart(4, '0')}</div>
+                     </div>
+                   </div>
+                 </td>
+                 <td className="p-4 text-white font-mono text-sm">${p.price}</td>
+                 <td className="p-4 text-sm text-gray-400">
+                    <div className="w-full bg-gray-800 h-1.5 rounded-full w-24 overflow-hidden mb-1">
+                      <div className="bg-blytz-neon h-full" style={{width: `${Math.random() * 100}%`}}></div>
+                    </div>
+                    {Math.floor(Math.random() * 50)} units
+                 </td>
+                 <td className="p-4">
+                   <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-green-500/10 text-green-500 border border-green-500/20">
+                     <span className="w-1 h-1 rounded-full bg-green-500"></span> Live
+                   </span>
+                 </td>
+                 <td className="p-4 text-right">
+                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <button className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-white"><Edit className="w-4 h-4" /></button>
+                     <button className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-white"><Copy className="w-4 h-4" /></button>
+                     <button className="p-1.5 hover:bg-red-500/10 rounded text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                   </div>
+                 </td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </div>
+    </div>
+  );
+
+  const DashboardBulkUpload = () => (
+    <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4">
+       <div className="text-center mb-10">
+         <h2 className="text-3xl font-display font-bold text-white italic mb-2">MASS UPLINK PROTOCOL</h2>
+         <p className="text-gray-400">Drag and drop assets to initiate bulk ingestion. AI auto-tagging enabled.</p>
+       </div>
+
+       <div className="border-2 border-dashed border-white/10 rounded-xl p-16 text-center hover:border-blytz-neon hover:bg-blytz-neon/5 transition-all cursor-pointer group mb-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.02)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[background-position_20s_infinite]"></div>
+          <Upload className="w-16 h-16 text-gray-600 mx-auto mb-6 group-hover:text-blytz-neon group-hover:scale-110 transition-all" />
+          <h3 className="text-xl font-bold text-white mb-2">Drop CSV or Image Files Here</h3>
+          <p className="text-sm text-gray-500 mb-8">Supported: .CSV, .JSON, .JPG, .PNG (Max 50MB)</p>
+          <Button>Select Files from Terminal</Button>
+       </div>
+
+       {/* Processing Queue UI simulation */}
+       <div className="space-y-4">
+         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Uplink Queue</h4>
+         
+         {/* Completed Item */}
+         <div className="bg-black/40 border border-green-500/30 p-4 rounded flex items-center gap-4">
+           <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-xs font-bold text-gray-500">IMG</div>
+           <div className="flex-1">
+             <div className="flex justify-between mb-1">
+               <span className="text-white text-sm font-bold">batch_upload_v2.csv</span>
+               <span className="text-green-500 text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Complete</span>
+             </div>
+             <div className="h-1 bg-gray-800 rounded-full w-full overflow-hidden">
+               <div className="h-full bg-green-500 w-full"></div>
+             </div>
+           </div>
+         </div>
+
+         {/* Processing Item */}
+         <div className="bg-black/40 border border-blytz-neon/30 p-4 rounded flex items-center gap-4">
+           <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-xs font-bold text-gray-500">IMG</div>
+           <div className="flex-1">
+             <div className="flex justify-between mb-1">
+               <span className="text-white text-sm font-bold">cyber_deck_images.zip</span>
+               <span className="text-blytz-neon text-xs flex items-center gap-1"><Loader2Icon className="w-3 h-3 animate-spin" /> AI Analyzing...</span>
+             </div>
+             <div className="h-1 bg-gray-800 rounded-full w-full overflow-hidden">
+               <div className="h-full bg-blytz-neon w-2/3 animate-pulse"></div>
+             </div>
+           </div>
+         </div>
+       </div>
+    </div>
+  );
+
+  const renderSellerDashboard = () => (
+    <div className="container mx-auto px-4 py-8 h-[calc(100vh-4rem)]">
+      <div className="flex flex-col lg:flex-row gap-6 h-full">
+        {/* Sidebar */}
+        <aside className="w-full lg:w-64 bg-blytz-dark border border-white/10 rounded-lg p-4 flex flex-col gap-2 h-fit shrink-0">
+          {/* User Info */}
+          <div className="flex items-center gap-3 px-2 mb-6 pb-6 border-b border-white/10">
+             <div className="w-10 h-10 bg-blytz-neon text-black rounded font-bold flex items-center justify-center">AC</div>
+             <div className="overflow-hidden">
+               <div className="font-bold text-white text-sm truncate">Alex Chen</div>
+               <div className="text-[10px] text-blytz-neon font-mono truncate">ID: 8821-X</div>
+             </div>
+          </div>
+
+          <button 
+            onClick={() => setDashboardTab('OVERVIEW')}
+            className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'OVERVIEW' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <LayoutDashboard className="w-4 h-4" /> Command Center
+          </button>
+          
+          <button 
+            onClick={() => setDashboardTab('INVENTORY')}
+            className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'INVENTORY' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <FileSpreadsheet className="w-4 h-4" /> Inventory Matrix
+          </button>
+
+          <button 
+            onClick={() => setDashboardTab('BULK')}
+            className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'BULK' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <Upload className="w-4 h-4" /> Mass Uplink
+          </button>
+
+          <div className="mt-auto pt-6 border-t border-white/10">
+             <div className="bg-black/40 p-3 rounded border border-white/5">
+               <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Storage Usage</div>
+               <div className="h-1.5 bg-gray-800 rounded-full w-full overflow-hidden mb-1">
+                 <div className="h-full bg-purple-500 w-[75%]"></div>
+               </div>
+               <div className="text-[10px] text-white text-right">75GB / 100GB</div>
+             </div>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 bg-blytz-dark border border-white/10 rounded-lg p-6 overflow-y-auto relative custom-scrollbar">
+           {/* Background Pattern */}
+           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none"></div>
+           
+           <div className="relative z-10">
+             {dashboardTab === 'OVERVIEW' && <DashboardOverview />}
+             {dashboardTab === 'INVENTORY' && <DashboardInventory />}
+             {dashboardTab === 'BULK' && <DashboardBulkUpload />}
+           </div>
+        </main>
       </div>
     </div>
   );
@@ -736,7 +908,7 @@ const App: React.FC = () => {
         {view === 'PRODUCT_DETAIL' && renderProductDetail()}
         {view === 'CHECKOUT' && renderCheckout()}
         {view === 'DROPS' && renderDrops()}
-        {view === 'SELL' && renderSell()}
+        {view === 'SELL' && renderSellerDashboard()}
         {view === 'ACCOUNT' && renderAccount()}
       </main>
 
