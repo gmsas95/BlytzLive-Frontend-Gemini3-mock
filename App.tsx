@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, X, Minus, Plus, Trash2, ArrowRight, Zap, ShieldCheck, Truck, RotateCcw, CreditCard, MapPin, Upload, Camera, CheckCircle, Package, User, MessageSquare, Send, Sparkles, Bot, LayoutDashboard, FileSpreadsheet, MoreVertical, Edit, Copy, BarChart3, Search } from 'lucide-react';
+import { ShoppingBag, X, Minus, Plus, Trash2, ArrowRight, Zap, ShieldCheck, Truck, RotateCcw, CreditCard, MapPin, Upload, Camera, CheckCircle, Package, User, MessageSquare, Send, Sparkles, Bot, LayoutDashboard, FileSpreadsheet, MoreVertical, Edit, Copy, BarChart3, Search, TrendingUp, Map, Users, Bell, Megaphone, Settings, Globe, DollarSign } from 'lucide-react';
 import { Header } from './components/Header';
 import { ProductCard } from './components/ProductCard';
 import { Button, Badge, Input } from './components/UI';
@@ -117,7 +117,7 @@ const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Dashboard State
-  const [dashboardTab, setDashboardTab] = useState<'OVERVIEW' | 'INVENTORY' | 'BULK'>('OVERVIEW');
+  const [dashboardTab, setDashboardTab] = useState<'OVERVIEW' | 'INVENTORY' | 'BULK' | 'ORDERS' | 'ANALYTICS' | 'MARKETING' | 'MESSAGES' | 'SETTINGS'>('OVERVIEW');
   
   // Sell Form State (For Bulk/Single)
   const [sellForm, setSellForm] = useState({
@@ -128,6 +128,11 @@ const App: React.FC = () => {
     price: ''
   });
   const [aiLoading, setAiLoading] = useState({ price: false, desc: false });
+
+  // Marketing AI State
+  const [adPrompt, setAdPrompt] = useState('');
+  const [generatedAd, setGeneratedAd] = useState('');
+  const [isGeneratingAd, setIsGeneratingAd] = useState(false);
 
   // --- Cart Logic ---
   const addToCart = (product: Product) => {
@@ -162,7 +167,7 @@ const App: React.FC = () => {
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // --- AI Handlers for Sell Page ---
+  // --- AI Handlers ---
   const handleEstimatePrice = async () => {
     if (!sellForm.title || !sellForm.condition) return;
     setAiLoading(prev => ({ ...prev, price: true }));
@@ -197,6 +202,24 @@ const App: React.FC = () => {
       console.error(e);
     } finally {
       setAiLoading(prev => ({ ...prev, desc: false }));
+    }
+  };
+
+  const handleGenerateAd = async () => {
+    if (!adPrompt) return;
+    setIsGeneratingAd(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Write a short, professional social media ad for a product described as: "${adPrompt}". 
+        Focus on value, quality, and features. Include hashtags.`,
+      });
+      setGeneratedAd(response.text || '');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGeneratingAd(false);
     }
   };
 
@@ -441,10 +464,11 @@ const App: React.FC = () => {
 
   const DashboardOverview = () => (
     <div className="space-y-6 animate-in slide-in-from-right-4">
+      <h2 className="text-2xl font-display font-bold text-white mb-6">Dashboard Overview</h2>
+      
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-black/40 border border-white/10 p-6 rounded-lg relative overflow-hidden group hover:border-blytz-neon/50 transition-all">
-          <div className="absolute -right-4 -top-4 bg-blytz-neon/10 w-24 h-24 rounded-full blur-2xl group-hover:bg-blytz-neon/20 transition-all"></div>
           <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Total Revenue</p>
@@ -453,26 +477,24 @@ const App: React.FC = () => {
             <Zap className="text-blytz-neon w-6 h-6" />
           </div>
           <div className="text-xs text-green-400 flex items-center gap-1">
-            <ArrowRight className="w-3 h-3 -rotate-45" /> +12% this week
+            <TrendingUp className="w-3 h-3" /> +12% this week
           </div>
         </div>
 
         <div className="bg-black/40 border border-white/10 p-6 rounded-lg relative overflow-hidden group hover:border-blytz-neon/50 transition-all">
-          <div className="absolute -right-4 -top-4 bg-blue-500/10 w-24 h-24 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Signals</p>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Orders</p>
               <h3 className="text-3xl font-bold text-white mt-1">24</h3>
             </div>
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></div>
+            <Package className="text-blue-500 w-6 h-6" />
           </div>
            <div className="text-xs text-gray-400">
-            5 items low on stock
+            5 items pending dispatch
           </div>
         </div>
 
         <div className="bg-black/40 border border-white/10 p-6 rounded-lg relative overflow-hidden group hover:border-blytz-neon/50 transition-all">
-          <div className="absolute -right-4 -top-4 bg-purple-500/10 w-24 h-24 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
            <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Seller Rating</p>
@@ -481,7 +503,7 @@ const App: React.FC = () => {
             <ShieldCheck className="text-purple-500 w-6 h-6" />
           </div>
           <div className="text-xs text-purple-400">
-            Top Rated Seller Badge Active
+            Top Rated Seller
           </div>
         </div>
       </div>
@@ -489,7 +511,7 @@ const App: React.FC = () => {
       {/* Recent Activity Graph Placeholder */}
       <div className="bg-black/40 border border-white/10 rounded-lg p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="font-bold text-white flex items-center gap-2"><BarChart3 className="w-4 h-4 text-blytz-neon" /> TRAFFIC ANALYSIS</h3>
+          <h3 className="font-bold text-white flex items-center gap-2"><BarChart3 className="w-4 h-4 text-blytz-neon" /> Sales Performance</h3>
           <select className="bg-black border border-white/10 text-xs text-white p-1 rounded">
              <option>Last 7 Days</option>
              <option>Last 30 Days</option>
@@ -501,23 +523,14 @@ const App: React.FC = () => {
            ))}
         </div>
         <div className="flex justify-between mt-2 text-xs text-gray-500 font-mono">
-           <span>00:00</span>
-           <span>06:00</span>
-           <span>12:00</span>
-           <span>18:00</span>
-           <span>23:59</span>
+           <span>Mon</span>
+           <span>Tue</span>
+           <span>Wed</span>
+           <span>Thu</span>
+           <span>Fri</span>
+           <span>Sat</span>
+           <span>Sun</span>
         </div>
-      </div>
-
-      <div className="bg-blytz-neon/5 border border-blytz-neon/20 p-4 rounded flex items-center gap-4">
-        <div className="p-2 bg-blytz-neon text-black rounded">
-          <Sparkles className="w-5 h-5" />
-        </div>
-        <div>
-          <h4 className="font-bold text-white text-sm">Optimization Tip</h4>
-          <p className="text-xs text-gray-400">Items with "Cyber" in the title are trending up 15%. Consider renaming SKU-992.</p>
-        </div>
-        <Button size="sm" variant="outline" className="ml-auto">Apply</Button>
       </div>
     </div>
   );
@@ -525,13 +538,13 @@ const App: React.FC = () => {
   const DashboardInventory = () => (
     <div className="animate-in slide-in-from-bottom-4 h-full flex flex-col">
        <div className="flex justify-between items-center mb-6">
-         <h2 className="text-2xl font-display font-bold text-white italic">INVENTORY MATRIX</h2>
+         <h2 className="text-2xl font-display font-bold text-white">Inventory Management</h2>
          <div className="flex gap-2">
             <div className="relative">
               <input type="text" placeholder="Search SKU..." className="bg-black border border-white/10 pl-8 pr-4 py-2 text-sm text-white rounded focus:border-blytz-neon outline-none w-48" />
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
             </div>
-            <Button size="sm" onClick={() => setDashboardTab('BULK')}><Plus className="w-4 h-4 mr-1" /> Add New</Button>
+            <Button size="sm" onClick={() => setDashboardTab('BULK')}><Plus className="w-4 h-4 mr-1" /> Add Product</Button>
          </div>
        </div>
 
@@ -541,7 +554,7 @@ const App: React.FC = () => {
              <tr className="border-b border-white/10 text-xs text-gray-500 uppercase tracking-widest bg-white/5">
                <th className="p-4 font-medium">Product</th>
                <th className="p-4 font-medium">Price</th>
-               <th className="p-4 font-medium">Stock</th>
+               <th className="p-4 font-medium">Stock Level</th>
                <th className="p-4 font-medium">Status</th>
                <th className="p-4 font-medium text-right">Actions</th>
              </tr>
@@ -567,7 +580,7 @@ const App: React.FC = () => {
                  </td>
                  <td className="p-4">
                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-green-500/10 text-green-500 border border-green-500/20">
-                     <span className="w-1 h-1 rounded-full bg-green-500"></span> Live
+                     <span className="w-1 h-1 rounded-full bg-green-500"></span> Active
                    </span>
                  </td>
                  <td className="p-4 text-right">
@@ -588,29 +601,28 @@ const App: React.FC = () => {
   const DashboardBulkUpload = () => (
     <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4">
        <div className="text-center mb-10">
-         <h2 className="text-3xl font-display font-bold text-white italic mb-2">MASS UPLINK PROTOCOL</h2>
-         <p className="text-gray-400">Drag and drop assets to initiate bulk ingestion. AI auto-tagging enabled.</p>
+         <h2 className="text-3xl font-display font-bold text-white mb-2">Bulk Product Upload</h2>
+         <p className="text-gray-400">Drag and drop CSV or JSON files to upload multiple products at once.</p>
        </div>
 
        <div className="border-2 border-dashed border-white/10 rounded-xl p-16 text-center hover:border-blytz-neon hover:bg-blytz-neon/5 transition-all cursor-pointer group mb-8 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.02)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[background-position_20s_infinite]"></div>
           <Upload className="w-16 h-16 text-gray-600 mx-auto mb-6 group-hover:text-blytz-neon group-hover:scale-110 transition-all" />
-          <h3 className="text-xl font-bold text-white mb-2">Drop CSV or Image Files Here</h3>
+          <h3 className="text-xl font-bold text-white mb-2">Drop Files Here</h3>
           <p className="text-sm text-gray-500 mb-8">Supported: .CSV, .JSON, .JPG, .PNG (Max 50MB)</p>
-          <Button>Select Files from Terminal</Button>
+          <Button>Browse Files</Button>
        </div>
 
        {/* Processing Queue UI simulation */}
        <div className="space-y-4">
-         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Uplink Queue</h4>
+         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Upload Queue</h4>
          
          {/* Completed Item */}
          <div className="bg-black/40 border border-green-500/30 p-4 rounded flex items-center gap-4">
-           <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-xs font-bold text-gray-500">IMG</div>
+           <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-xs font-bold text-gray-500">CSV</div>
            <div className="flex-1">
              <div className="flex justify-between mb-1">
-               <span className="text-white text-sm font-bold">batch_upload_v2.csv</span>
-               <span className="text-green-500 text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Complete</span>
+               <span className="text-white text-sm font-bold">summer_collection_v2.csv</span>
+               <span className="text-green-500 text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Processed</span>
              </div>
              <div className="h-1 bg-gray-800 rounded-full w-full overflow-hidden">
                <div className="h-full bg-green-500 w-full"></div>
@@ -623,14 +635,253 @@ const App: React.FC = () => {
            <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-xs font-bold text-gray-500">IMG</div>
            <div className="flex-1">
              <div className="flex justify-between mb-1">
-               <span className="text-white text-sm font-bold">cyber_deck_images.zip</span>
-               <span className="text-blytz-neon text-xs flex items-center gap-1"><Loader2Icon className="w-3 h-3 animate-spin" /> AI Analyzing...</span>
+               <span className="text-white text-sm font-bold">product_images_batch.zip</span>
+               <span className="text-blytz-neon text-xs flex items-center gap-1"><Loader2Icon className="w-3 h-3 animate-spin" /> Processing...</span>
              </div>
              <div className="h-1 bg-gray-800 rounded-full w-full overflow-hidden">
                <div className="h-full bg-blytz-neon w-2/3 animate-pulse"></div>
              </div>
            </div>
          </div>
+       </div>
+    </div>
+  );
+
+  const DashboardOrders = () => (
+    <div className="animate-in slide-in-from-bottom-4">
+       <h2 className="text-2xl font-display font-bold text-white mb-6">Order Management</h2>
+       <div className="bg-black/40 border border-white/10 rounded-lg overflow-hidden">
+         <table className="w-full text-left">
+           <thead>
+             <tr className="border-b border-white/10 text-xs text-gray-500 uppercase tracking-widest bg-white/5">
+               <th className="p-4">Order ID</th>
+               <th className="p-4">Customer</th>
+               <th className="p-4">Items</th>
+               <th className="p-4">Total</th>
+               <th className="p-4">Status</th>
+               <th className="p-4 text-right">Action</th>
+             </tr>
+           </thead>
+           <tbody className="divide-y divide-white/5">
+             {[1,2,3,4,5].map(i => (
+               <tr key={i} className="hover:bg-white/5 transition-colors">
+                 <td className="p-4 text-sm font-mono text-blytz-neon">#ORD-{9000+i}</td>
+                 <td className="p-4 text-sm text-white">Customer_{i}</td>
+                 <td className="p-4 text-sm text-gray-400">{i + 1} items</td>
+                 <td className="p-4 text-sm font-bold text-white">${(Math.random() * 500).toFixed(2)}</td>
+                 <td className="p-4">
+                   {i % 2 === 0 ? (
+                     <span className="px-2 py-1 rounded bg-yellow-500/20 text-yellow-500 text-xs font-bold border border-yellow-500/30">Pending</span>
+                   ) : (
+                     <span className="px-2 py-1 rounded bg-green-500/20 text-green-500 text-xs font-bold border border-green-500/30">Shipped</span>
+                   )}
+                 </td>
+                 <td className="p-4 text-right">
+                    {i % 2 === 0 && <Button size="sm" variant="outline">Fulfill</Button>}
+                 </td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </div>
+    </div>
+  );
+
+  const DashboardAnalytics = () => (
+    <div className="animate-in slide-in-from-bottom-4">
+       <h2 className="text-2xl font-display font-bold text-white mb-6 flex items-center gap-3">
+         Store Analytics
+       </h2>
+       
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="bg-black/40 border border-white/10 p-6 rounded-lg">
+             <div className="flex justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-400 uppercase">Traffic Source</h3>
+                <Globe className="w-4 h-4 text-blytz-neon" />
+             </div>
+             <div className="space-y-3">
+               <div className="flex justify-between text-sm"><span>Direct</span><span className="text-white">45%</span></div>
+               <div className="w-full bg-gray-800 h-1 rounded-full"><div className="w-[45%] bg-blytz-neon h-full rounded-full"></div></div>
+               <div className="flex justify-between text-sm"><span>Social Media</span><span className="text-white">30%</span></div>
+               <div className="w-full bg-gray-800 h-1 rounded-full"><div className="w-[30%] bg-purple-500 h-full rounded-full"></div></div>
+             </div>
+          </div>
+          
+          <div className="bg-black/40 border border-white/10 p-6 rounded-lg">
+             <div className="flex justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-400 uppercase">Conversion Rate</h3>
+                <TrendingUp className="w-4 h-4 text-green-500" />
+             </div>
+             <div className="text-4xl font-bold text-white mb-2">4.2%</div>
+             <p className="text-xs text-gray-500">+0.8% from last month</p>
+          </div>
+
+          <div className="bg-black/40 border border-white/10 p-6 rounded-lg relative overflow-hidden">
+             <div className="flex justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-400 uppercase">Customer Map</h3>
+                <Map className="w-4 h-4 text-blue-500" />
+             </div>
+             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500 to-transparent top-10"></div>
+             <div className="relative z-10 flex items-center justify-center h-24 text-gray-600 text-xs">
+                [Map Visualization Placeholder]
+             </div>
+          </div>
+       </div>
+
+       <div className="bg-black/40 border border-white/10 p-6 rounded-lg">
+         <h3 className="font-bold text-white mb-6">Revenue Over Time</h3>
+         <div className="h-64 flex items-end gap-1">
+             {[...Array(30)].map((_, i) => {
+               const height = Math.random() * 100;
+               return (
+                 <div key={i} className="flex-1 bg-blytz-neon/20 hover:bg-blytz-neon transition-colors rounded-t relative group" style={{height: `${height}%`}}>
+                   <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-black border border-white/20 text-xs px-2 py-1 rounded text-white pointer-events-none">
+                     ${(height * 100).toFixed(0)}
+                   </div>
+                 </div>
+               )
+             })}
+         </div>
+       </div>
+    </div>
+  );
+
+  const DashboardMarketing = () => (
+    <div className="animate-in slide-in-from-bottom-4">
+       <h2 className="text-2xl font-display font-bold text-white mb-6">Marketing & Promotions</h2>
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         {/* Ad Generator */}
+         <div className="bg-black/40 border border-white/10 p-6 rounded-lg">
+            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Sparkles className="w-4 h-4 text-blytz-neon" /> AI Copy Assistant</h3>
+            <p className="text-sm text-gray-400 mb-4">Input product details to generate professional ad copy for social media.</p>
+            <textarea 
+              className="w-full bg-black border border-white/10 rounded p-4 text-sm text-white focus:border-blytz-neon outline-none h-32 mb-4"
+              placeholder="e.g. NeonX Sneakers, 50% off, limited time offer..."
+              value={adPrompt}
+              onChange={(e) => setAdPrompt(e.target.value)}
+            />
+            <Button 
+              className="w-full mb-6" 
+              onClick={handleGenerateAd}
+              disabled={isGeneratingAd || !adPrompt}
+            >
+              {isGeneratingAd ? "Generating..." : "Generate Copy"}
+            </Button>
+            
+            {generatedAd && (
+              <div className="bg-white/5 border border-white/10 p-4 rounded relative">
+                <p className="text-white text-sm font-mono whitespace-pre-wrap">{generatedAd}</p>
+                <button className="absolute top-2 right-2 text-gray-500 hover:text-white"><Copy className="w-4 h-4" /></button>
+              </div>
+            )}
+         </div>
+
+         {/* Active Campaigns */}
+         <div className="space-y-4">
+            <h3 className="font-bold text-white">Active Campaigns</h3>
+            <div className="bg-blytz-neon text-black p-6 rounded-lg">
+              <div className="flex justify-between items-start mb-2">
+                 <h3 className="font-bold text-lg">Flash Sale: Electronics</h3>
+                 <Badge variant="flash">LIVE</Badge>
+              </div>
+              <p className="text-sm font-medium mb-4 opacity-80">50% Off CyberDeck V2</p>
+              <div className="w-full bg-black/10 h-2 rounded-full mb-1">
+                <div className="bg-black h-full w-[75%] rounded-full"></div>
+              </div>
+              <div className="flex justify-between text-xs font-bold">
+                 <span>750/1000 Claimed</span>
+                 <span>Ends in 2h</span>
+              </div>
+            </div>
+
+            <div className="bg-black/40 border border-white/10 p-6 rounded-lg flex items-center justify-center cursor-pointer hover:border-blytz-neon/50 border-dashed transition-colors">
+               <div className="text-center text-gray-500">
+                 <Plus className="w-8 h-8 mx-auto mb-2" />
+                 <span className="font-bold">Create New Campaign</span>
+               </div>
+            </div>
+         </div>
+       </div>
+    </div>
+  );
+
+  const DashboardMessages = () => (
+    <div className="animate-in slide-in-from-bottom-4 h-[600px] flex gap-4">
+       {/* Conversation List */}
+       <div className="w-1/3 bg-black/40 border border-white/10 rounded-lg overflow-hidden flex flex-col">
+         <div className="p-4 border-b border-white/10">
+           <h3 className="font-bold text-white flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Inbox</h3>
+         </div>
+         <div className="overflow-y-auto flex-1">
+           {[1,2,3].map(i => (
+             <div key={i} className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 ${i===1 ? 'bg-white/5 border-l-2 border-l-blytz-neon' : ''}`}>
+               <div className="flex justify-between mb-1">
+                 <span className="text-white font-bold text-sm">Customer {i}</span>
+                 <span className="text-xs text-gray-500">2m ago</span>
+               </div>
+               <p className="text-xs text-gray-400 truncate">I have a question about my order...</p>
+             </div>
+           ))}
+         </div>
+       </div>
+
+       {/* Chat Area */}
+       <div className="flex-1 bg-black/40 border border-white/10 rounded-lg flex flex-col">
+         <div className="p-4 border-b border-white/10 flex justify-between items-center">
+            <span className="font-bold text-white">Customer 1</span>
+            <span className="text-xs text-green-500 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Online</span>
+         </div>
+         <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+            <div className="flex justify-start">
+               <div className="bg-white/10 text-white p-3 rounded-lg rounded-tl-none max-w-[80%] text-sm">
+                 I have a question about the shipping time. Is it really same-day?
+               </div>
+            </div>
+            <div className="flex justify-end">
+               <div className="bg-blytz-neon/20 text-blytz-neon border border-blytz-neon/20 p-3 rounded-lg rounded-br-none max-w-[80%] text-sm font-mono">
+                 Yes, for metro areas we offer same-day drone delivery if ordered before 2 PM.
+               </div>
+            </div>
+         </div>
+         <div className="p-4 border-t border-white/10 flex gap-2">
+            <input className="flex-1 bg-black border border-white/10 rounded px-4 py-2 text-sm text-white focus:border-blytz-neon outline-none" placeholder="Type a message..." />
+            <button className="bg-blytz-neon text-black p-2 rounded hover:bg-white"><Send className="w-4 h-4" /></button>
+         </div>
+       </div>
+    </div>
+  );
+
+  const DashboardSettings = () => (
+    <div className="animate-in slide-in-from-bottom-4 max-w-2xl">
+       <h2 className="text-2xl font-display font-bold text-white mb-6">Settings</h2>
+       <div className="space-y-6">
+          <div className="bg-black/40 border border-white/10 p-6 rounded-lg">
+             <h3 className="text-white font-bold mb-4 border-b border-white/10 pb-2">Store Profile</h3>
+             <div className="grid grid-cols-2 gap-4">
+               <Input label="Display Name" defaultValue="Neon Tech Supply" />
+               <Input label="Contact Email" defaultValue="admin@neontech.io" />
+               <div className="col-span-2">
+                 <Input label="Bio / Description" defaultValue="Premium tech gear for the modern age." />
+               </div>
+             </div>
+          </div>
+
+          <div className="bg-black/40 border border-white/10 p-6 rounded-lg">
+             <h3 className="text-white font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2"><DollarSign className="w-4 h-4" /> Payment Methods</h3>
+             <div className="flex items-center justify-between bg-white/5 p-4 rounded border border-white/5 mb-2">
+                <span className="text-sm text-white font-bold">Stripe Connect</span>
+                <span className="text-xs text-green-500 font-mono">CONNECTED</span>
+             </div>
+             <div className="flex items-center justify-between bg-white/5 p-4 rounded border border-white/5">
+                <span className="text-sm text-white font-bold">Crypto Wallet</span>
+                <span className="text-xs text-gray-500 font-mono">0x71...9A21</span>
+             </div>
+          </div>
+
+          <div className="flex justify-end gap-4">
+             <Button variant="ghost">Cancel</Button>
+             <Button>Save Changes</Button>
+          </div>
        </div>
     </div>
   );
@@ -653,25 +904,59 @@ const App: React.FC = () => {
             onClick={() => setDashboardTab('OVERVIEW')}
             className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'OVERVIEW' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
-            <LayoutDashboard className="w-4 h-4" /> Command Center
+            <LayoutDashboard className="w-4 h-4" /> Overview
           </button>
           
+          <button 
+            onClick={() => setDashboardTab('ORDERS')}
+            className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'ORDERS' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <Package className="w-4 h-4" /> Orders
+          </button>
+
           <button 
             onClick={() => setDashboardTab('INVENTORY')}
             className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'INVENTORY' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
-            <FileSpreadsheet className="w-4 h-4" /> Inventory Matrix
+            <FileSpreadsheet className="w-4 h-4" /> Inventory
+          </button>
+
+          <button 
+            onClick={() => setDashboardTab('ANALYTICS')}
+            className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'ANALYTICS' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <BarChart3 className="w-4 h-4" /> Analytics
+          </button>
+
+          <button 
+            onClick={() => setDashboardTab('MARKETING')}
+            className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'MARKETING' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <Megaphone className="w-4 h-4" /> Marketing
+          </button>
+
+          <button 
+            onClick={() => setDashboardTab('MESSAGES')}
+            className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'MESSAGES' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            <MessageSquare className="w-4 h-4" /> Messages
           </button>
 
           <button 
             onClick={() => setDashboardTab('BULK')}
             className={`flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'BULK' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
-            <Upload className="w-4 h-4" /> Mass Uplink
+            <Upload className="w-4 h-4" /> Bulk Upload
           </button>
 
           <div className="mt-auto pt-6 border-t border-white/10">
-             <div className="bg-black/40 p-3 rounded border border-white/5">
+             <button 
+              onClick={() => setDashboardTab('SETTINGS')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-bold transition-all ${dashboardTab === 'SETTINGS' ? 'bg-blytz-neon text-black shadow-[0_0_15px_rgba(190,242,100,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+            >
+              <Settings className="w-4 h-4" /> Settings
+            </button>
+             <div className="bg-black/40 p-3 rounded border border-white/5 mt-2">
                <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Storage Usage</div>
                <div className="h-1.5 bg-gray-800 rounded-full w-full overflow-hidden mb-1">
                  <div className="h-full bg-purple-500 w-[75%]"></div>
@@ -688,8 +973,13 @@ const App: React.FC = () => {
            
            <div className="relative z-10">
              {dashboardTab === 'OVERVIEW' && <DashboardOverview />}
+             {dashboardTab === 'ORDERS' && <DashboardOrders />}
              {dashboardTab === 'INVENTORY' && <DashboardInventory />}
+             {dashboardTab === 'ANALYTICS' && <DashboardAnalytics />}
+             {dashboardTab === 'MARKETING' && <DashboardMarketing />}
+             {dashboardTab === 'MESSAGES' && <DashboardMessages />}
              {dashboardTab === 'BULK' && <DashboardBulkUpload />}
+             {dashboardTab === 'SETTINGS' && <DashboardSettings />}
            </div>
         </main>
       </div>
