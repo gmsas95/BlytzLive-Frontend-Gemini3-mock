@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { ShoppingBag, Search, Menu, Zap, X } from 'lucide-react';
 import { Button } from './UI';
+import { ViewState } from '../types';
 
 interface HeaderProps {
   cartCount: number;
   onCartClick: () => void;
-  onHomeClick: () => void;
+  onNavClick: (view: ViewState) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ cartCount, onCartClick, onHomeClick }) => {
+export const Header: React.FC<HeaderProps> = ({ cartCount, onCartClick, onNavClick }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -17,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ cartCount, onCartClick, onHomeCl
         {/* Logo */}
         <div 
           className="flex items-center gap-2 cursor-pointer group" 
-          onClick={onHomeClick}
+          onClick={() => onNavClick('HOME')}
         >
           <div className="w-8 h-8 bg-blytz-neon text-black flex items-center justify-center -skew-x-12 group-hover:rotate-12 transition-transform">
             <Zap className="w-5 h-5 fill-current" />
@@ -42,9 +43,9 @@ export const Header: React.FC<HeaderProps> = ({ cartCount, onCartClick, onHomeCl
         {/* Actions */}
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-400">
-            <a href="#" className="hover:text-blytz-neon transition-colors">Drops</a>
-            <a href="#" className="hover:text-blytz-neon transition-colors">Sell</a>
-            <a href="#" className="hover:text-blytz-neon transition-colors">Account</a>
+            <button onClick={() => onNavClick('DROPS')} className="hover:text-blytz-neon transition-colors uppercase tracking-wide">Drops</button>
+            <button onClick={() => onNavClick('SELL')} className="hover:text-blytz-neon transition-colors uppercase tracking-wide">Sell</button>
+            <button onClick={() => onNavClick('ACCOUNT')} className="hover:text-blytz-neon transition-colors uppercase tracking-wide">Account</button>
           </div>
 
           <button 
@@ -70,18 +71,19 @@ export const Header: React.FC<HeaderProps> = ({ cartCount, onCartClick, onHomeCl
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-blytz-black border-t border-white/10 p-4 absolute w-full left-0 animate-in slide-in-from-top-5">
+        <div className="md:hidden bg-blytz-black border-t border-white/10 p-4 absolute w-full left-0 animate-in slide-in-from-top-5 h-screen z-50">
            <input 
               type="text" 
               placeholder="Search..." 
               className="w-full bg-blytz-dark border border-white/10 p-3 text-white mb-4 focus:border-blytz-neon outline-none"
             />
             <nav className="flex flex-col gap-4">
-              <a href="#" className="text-lg font-display text-white hover:text-blytz-neon">New Drops</a>
-              <a href="#" className="text-lg font-display text-white hover:text-blytz-neon">Trending</a>
-              <a href="#" className="text-lg font-display text-white hover:text-blytz-neon">Sell Item</a>
+              <button onClick={() => { onNavClick('DROPS'); setIsMobileMenuOpen(false); }} className="text-left text-lg font-display text-white hover:text-blytz-neon">New Drops</button>
+              <button onClick={() => { onNavClick('HOME'); setIsMobileMenuOpen(false); }} className="text-left text-lg font-display text-white hover:text-blytz-neon">Trending</button>
+              <button onClick={() => { onNavClick('SELL'); setIsMobileMenuOpen(false); }} className="text-left text-lg font-display text-white hover:text-blytz-neon">Sell Item</button>
+              <button onClick={() => { onNavClick('ACCOUNT'); setIsMobileMenuOpen(false); }} className="text-left text-lg font-display text-white hover:text-blytz-neon">Account</button>
               <div className="h-px bg-white/10 my-2" />
-              <Button variant="primary" className="w-full">Sign In</Button>
+              <Button variant="primary" className="w-full" onClick={() => { onNavClick('ACCOUNT'); setIsMobileMenuOpen(false); }}>Sign In</Button>
             </nav>
         </div>
       )}

@@ -55,3 +55,21 @@ export const Badge: React.FC<{ children: React.ReactNode; variant?: 'hot' | 'fla
     </span>
   );
 };
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+}
+
+export const Input: React.FC<InputProps> = ({ label, error, className = '', ...props }) => {
+  return (
+    <div className="w-full">
+      {label && <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{label}</label>}
+      <input 
+        className={`w-full bg-blytz-dark border border-white/10 px-4 py-3 text-white focus:outline-none focus:border-blytz-neon focus:ring-1 focus:ring-blytz-neon transition-all placeholder:text-gray-700 font-mono text-sm ${className}`}
+        {...props}
+      />
+      {error && <span className="text-red-500 text-xs mt-1 block">{error}</span>}
+    </div>
+  );
+};

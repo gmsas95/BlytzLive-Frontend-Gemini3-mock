@@ -13,6 +13,7 @@ export interface Product {
   isHot?: boolean;
   timeLeft?: string; // For flash sales
   description?: string;
+  dropDate?: string; // For upcoming drops
 }
 
 export interface CartItem extends Product {
@@ -25,4 +26,4 @@ export interface Category {
   icon: React.ReactNode;
 }
 
-export type ViewState = 'HOME' | 'PRODUCT_DETAIL' | 'CHECKOUT';
+export type ViewState = 'HOME' | 'PRODUCT_DETAIL' | 'CHECKOUT' | 'DROPS' | 'SELL' | 'ACCOUNT';
